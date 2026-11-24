@@ -33,9 +33,12 @@ Then open **http://localhost:4180** and feel the steam.
 
 - **Drag** to walk around the dock.
 - **Scroll** to get a closer look.
+- **Morning** for bright skies and a clear look at the river.
+- **Dusk** for a full-send Pacific Northwest sunset.
+- **Night** for stars, glowing lights, and a crackling fire pit.
 - **Open roof** to peek inside the sauna.
 - **Pause** to catch the backflip mid-air.
-- **Reset view** when you've drifted too far downriver.
+- **Reset** when you've drifted too far downriver.
 
 Keep an eye out for the brave soul pulling the Downpour.
 
