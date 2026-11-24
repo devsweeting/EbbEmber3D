@@ -11,6 +11,8 @@
 
 <p align="center">A tiny, hand-built 3D diorama of Portland's floating sauna on the Columbia River.</p>
 
+<p align="center"><strong><a href="https://ebbember3d.vercel.app">Step onto the dock →</a></strong></p>
+
 ## Dive in
 
 You'll need [Node.js](https://nodejs.org/) 18 or newer. No towel required.
