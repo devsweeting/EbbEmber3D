@@ -18,16 +18,10 @@ function pine(B, x, z, s, base) {
 }
 
 function buildDock(B) {
-  // Gangway, power pedestal, coiled line and mooring lines on the walkway behind the sauna.
-  B.box(C.steelLight, 1.2, 0.04, 0.34, 3.0, 0.46, -2.72, { rz: 0.02, stroke: 0.001 });
+  // Power pedestal and coiled line on the dock in front of the sauna.
   B.box(C.homeTeal, 0.3, 0.92, 0.26, -2.6, 0.8, -4.7, { r: 0.03, stroke: 0.0014 });
   B.box(C.frame, 0.2, 0.12, 0.02, -2.6, 1.02, -4.56, { stroke: 0 });
   for (let k = 0; k < 3; k++) B.geo(C.white, new THREE.TorusGeometry(0.2, 0.022, 6, 18), -5.2, 0.37 + k * 0.035, -3.6, { rx: Math.PI / 2, stroke: 0.0006 });
-  for (const [ax, bx] of [[-5.9, -5.1], [0.0, 0.6], [5.6, 5.2]]) {
-    B.box(C.frame, 0.26, 0.05, 0.08, ax, 0.37, -3.05, { stroke: 0 });
-    const dx = bx - ax, dz = 0.45, len = Math.hypot(dx, dz);
-    B.box(C.white, 0.022, 0.022, len, (ax + bx) / 2, 0.47, -2.83, { ry: Math.atan2(dx, dz), rx: -0.2, stroke: 0 });
-  }
 }
 
 function buildSailboat(B) {

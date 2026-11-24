@@ -4,11 +4,14 @@ import * as THREE from 'three';
 import { C } from './kit.js';
 
 export const DECK = 0.56;
+// The float stops at the door wall; the dock itself is the walkway in front of it.
+export const FRONT = -1.72;
+const DOCK_Y = 0.35;
 const CAB = { x0: -3.8, x1: 3.8, z: 1.6, h: 2.5 };
 const ROOF = { x0: -5.9, x1: 4.6, z: 2.45, y: DECK + 2.62, t: 0.26 };
 // The stair is on the end facing the swim area, climbing from the dock side
 // toward the river side, up to a small landing beside the roof.
-export const STAIR = { x0: 4.66, x1: 5.26, top: 0.95, foot: -1.95 };
+export const STAIR = { x0: 4.66, x1: 5.26, top: 0.95, foot: -2.17 };
 export const DIVE = { x0: -5.0, x1: -3.3 };
 const FLUE = { x: -3.1, z: -1.88, r: 0.13 };
 
@@ -250,16 +253,17 @@ export function buildSauna(kit, look) {
   const R = kit.batch(roof);
 
   // Float and its side plates.
-  S.box(C.steel, 12.1, 0.62, 5.3, 0, 0.16, 0, { r: 0.05, stroke: 0.0034 });
-  for (const z of [2.66, -2.66]) {
+  S.box(C.steel, 12.1, 0.62, 2.65 - FRONT, 0, 0.16, (2.65 + FRONT) / 2, { r: 0.05, stroke: 0.0034 });
+  for (const z of [2.66, FRONT - 0.01]) {
     for (const x of [-3.9, 0, 3.9]) S.box(C.steelLight, 3.5, 0.045, 0.02, x, 0.33, z, { stroke: 0 });
   }
-  for (const x of [6.06, -6.06]) S.box(C.steelLight, 0.02, 0.045, 4.4, x, 0.33, 0, { stroke: 0 });
+  for (const x of [6.06, -6.06]) S.box(C.steelLight, 0.02, 0.045, 3.6, x, 0.33, (2.65 + FRONT) / 2, { stroke: 0 });
   S.box('#e9b45a', 0.42, 0.11, 0.02, -5.5, 0.34, 2.665, { stroke: 0 });
 
   // Cedar deck boards, run lengthwise with staggered joints.
   for (let row = 0; row < 37; row++) {
     const z = -2.59 + row * 0.144;
+    if (z < FRONT + 0.066) continue;
     let x = -6;
     let k = row * 3;
     while (x < 6) {
@@ -323,13 +327,16 @@ export function buildSauna(kit, look) {
   // Roof posts, carrying the load to the float.
   // Set to the outer edge so the side walkways stay clear; the dock-side middle post clears the flue.
   for (const [x, z] of [[-5.72, 2.38], [-2.9, 2.38], [4.4, 2.38], [-5.72, -2.38], [-1.6, -2.38], [4.4, -2.38]]) {
-    S.box(C.galv, 0.13, ROOF.y - DECK, 0.13, x, (ROOF.y + DECK) / 2, z, { stroke: 0.0022 });
+    const base = z < FRONT ? DOCK_Y : DECK; // the front posts stand on the dock
+    S.box(C.galv, 0.13, ROOF.y - base, 0.13, x, (ROOF.y + base) / 2, z, { stroke: 0.0022 });
   }
+  // A single step from the dock up to the door.
+  S.box(C.cedarLight, 1.05, 0.1, 0.32, 3.0, DOCK_Y + 0.05, FRONT - 0.16, { stroke: 0.001 });
 
   // Deck rails, leaving the dock gate and ladder gap open.
   rail(S, { axis: 'x', fixed: 2.53, a0: -5.92, a1: 5.92, y: DECK });
-  rail(S, { axis: 'z', fixed: 5.92, a0: -2.53, a1: 2.53, y: DECK });
-  rail(S, { axis: 'z', fixed: -5.92, a0: -2.53, a1: 1.0, y: DECK });
+  rail(S, { axis: 'z', fixed: 5.92, a0: FRONT + 0.05, a1: 2.53, y: DECK });
+  rail(S, { axis: 'z', fixed: -5.92, a0: FRONT + 0.05, a1: 1.0, y: DECK });
   rail(S, { axis: 'z', fixed: -5.92, a0: 1.8, a1: 2.53, y: DECK, step: 1 });
 
   // River ladder, running below the waterline.
@@ -348,27 +355,27 @@ export function buildSauna(kit, look) {
   }
   S.box(C.frame, 0.09, 0.08, 0.1, 4.9, DECK + 0.98, 2.58, { stroke: 0 });
 
-  S.geo(C.ring, new THREE.TorusGeometry(0.31, 0.085, 10, 28), -5.98, DECK + 0.62, -1.75, { ry: Math.PI / 2, stroke: 0.0014 });
+  S.geo(C.ring, new THREE.TorusGeometry(0.31, 0.085, 10, 28), -5.98, DECK + 0.62, -0.95, { ry: Math.PI / 2, stroke: 0.0014 });
   for (let i = 0; i < 4; i++) {
     const a = Math.PI / 4 + (i * Math.PI) / 2;
-    S.box(C.white, 0.19, 0.19, 0.13, -5.98, DECK + 0.62 + Math.sin(a) * 0.31, -1.75 + Math.cos(a) * 0.31, { rx: -a, stroke: 0 });
+    S.box(C.white, 0.19, 0.19, 0.13, -5.98, DECK + 0.62 + Math.sin(a) * 0.31, -0.95 + Math.cos(a) * 0.31, { rx: -a, stroke: 0 });
   }
 
   // Open stair on the swim-area end, running alongside the end wall.
   const roofTop = ROOF.y + ROOF.t;
-  const rise = roofTop - DECK, run = STAIR.foot - STAIR.top, len = Math.hypot(rise, run), ang = -Math.atan2(run, rise);
+  const rise = roofTop - DOCK_Y, run = STAIR.foot - STAIR.top, len = Math.hypot(rise, run), ang = -Math.atan2(run, rise);
   const midZ = (STAIR.foot + STAIR.top) / 2, midX = (STAIR.x0 + STAIR.x1) / 2, width = STAIR.x1 - STAIR.x0;
   const nY = (Math.abs(run) / len) * 0.88, nZ = (rise / len) * 0.88 * Math.sign(run);
   for (const x of [STAIR.x0 + 0.03, STAIR.x1 - 0.03]) {
-    S.box(C.cedarDark, 0.06, len, 0.2, x, DECK + rise / 2, midZ, { rx: ang, stroke: 0.0012 });
-    S.box(C.cedarLight, 0.06, len + 0.1, 0.07, x, DECK + rise / 2 + nY, midZ + nZ, { rx: ang, stroke: 0.001 });
+    S.box(C.cedarDark, 0.06, len, 0.2, x, DOCK_Y + rise / 2, midZ, { rx: ang, stroke: 0.0012 });
+    S.box(C.cedarLight, 0.06, len + 0.1, 0.07, x, DOCK_Y + rise / 2 + nY, midZ + nZ, { rx: ang, stroke: 0.001 });
     for (const k of [0.1, 0.5, 0.9]) {
-      S.box(C.galv, 0.05, 0.9, 0.05, x, DECK + rise * k + 0.45, STAIR.foot - run * k, { stroke: 0.0008 });
+      S.box(C.galv, 0.05, 0.9, 0.05, x, DOCK_Y + rise * k + 0.45, STAIR.foot - run * k, { stroke: 0.0008 });
     }
   }
-  for (let i = 1; i < 14; i++) {
-    const k = i / 14;
-    S.box(C.cedarLight, width - 0.08, 0.045, 0.25, midX, DECK + rise * k, STAIR.foot - run * k, { stroke: 0.0008 });
+  for (let i = 1; i < 15; i++) {
+    const k = i / 15;
+    S.box(C.cedarLight, width - 0.08, 0.045, 0.25, midX, DOCK_Y + rise * k, STAIR.foot - run * k, { stroke: 0.0008 });
   }
   // Landing beside the roof, carried on its own posts.
   S.box(C.cedar, 0.7, 0.12, 0.87, 4.95, roofTop - 0.06, 1.515, { stroke: 0.0014 });
@@ -385,9 +392,6 @@ export function buildSauna(kit, look) {
   for (let i = 0; i < 6; i++) {
     S.box(C.cedarDeep, 0.2, 0.004, 0.09, -5.65 + i * 0.3, DECK + 0.003, 1.42 + (i % 2) * 0.17 + i * 0.09, { ry: 0.25, stroke: 0, cast: false });
   }
-
-  // Mooring cleats on the dock side.
-  for (const x of [-5.1, 0.6, 5.2]) S.box(C.frame, 0.32, 0.05, 0.08, x, DECK + 0.03, -2.6, { stroke: 0 });
 
   // Sign, on both long walls.
   const tex = signTexture();

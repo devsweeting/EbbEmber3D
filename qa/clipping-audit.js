@@ -91,7 +91,7 @@ export async function run(d, { dt = 1 / 30, tol = 0.03 } = {}) {
         if (!a.moving && floor >= 0 && Math.abs(gap) > Math.abs(a.float)) { a.float = gap; a.floatT = t; }
         if (a.moving && floor >= 0) {
           const prev = a.feetLast[low.part];
-          const straight = a.name !== 'diver' || ((t % 24) > 11 && (t % 24) < 13.8);
+          const straight = a.name !== 'diver' || ((t % 24) > 9.8 && (t % 24) < 13.8);
           if (straight && gap < 0.05 && prev && prev.f === f - 1) { const sl = Math.hypot(low.x - prev.x, low.z - prev.z) / dt; if (sl > a.slip) { a.slip = sl; a.slipT = t; } }
           a.feetLast[low.part] = { x: low.x, z: low.z, f };
         }

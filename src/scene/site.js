@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { C, clamp, smooth } from './kit.js';
 import { softDisc } from './environment.js';
+import { FRONT } from './sauna.js';
 
 export const DK = 0.35;
 export const DECK_AREA = { x0: -6.7, x1: 20.4, z0: -14.1, z1: 1.4 };
@@ -50,6 +51,7 @@ function buildDeck(B) {
   // Floats under the deck, leaving a square of open water beside the sauna.
   const hull = (x0, x1, z0, z1) => B.box(C.cedarDark, x1 - x0, 0.34, z1 - z0, (x0 + x1) / 2, 0.13, (z0 + z1) / 2, { stroke: 0.0026 });
   hull(-6.7, 6.7, -5.0, -2.74);
+  hull(-6.06, 6.06, -2.74, FRONT); // the dock runs right up to the sauna's door wall
   hull(-6.7, 20.4, -14.1, -5.0);
   hull(SWIM.x1, 20.4, -5.0, 1.4);
   // Main entrance: one slim walkway along the outer edge, from the front deck to shore,
@@ -59,6 +61,7 @@ function buildDeck(B) {
 
   // Old grey dock, with its boards running in different directions by section.
   boardsZ(B, -6.7, 6.7, -5.0, -2.74, WEATHERED);
+  boardsZ(B, -6.06, 6.06, -2.74, FRONT, WEATHERED);
   boardsX(B, -6.7, 10.2, -14.1, -5.0, WEATHERED);
   boardsX(B, 10.2, 20.4, -14.1, -5.0, WEATHERED);
   boardsZ(B, SWIM.x1, 20.4, -5.0, 1.4, WEATHERED);
@@ -79,6 +82,8 @@ function buildDeck(B) {
   curbZ(21.63, -21.85, 1.4);
   curbZ(20.47, -21.85, -15.4);
   curbZ(-6.63, -14.1, -2.74);
+  curbZ(-5.99, -2.74, FRONT);
+  curbZ(5.99, -2.74, FRONT);
   curbX(SWIM.x0, SWIM.x1 + 0.07, SWIM.z0 + 0.07);
   curbZ(SWIM.x1 + 0.07, SWIM.z0, SWIM.z1);
   B.box(C.white, 21.7 - SWIM.x1, 0.16, 0.16, (21.7 + SWIM.x1) / 2, 0.22, 1.5, { r: 0.06, stroke: 0.0012 });

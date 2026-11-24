@@ -20,17 +20,13 @@ const UP = [-4.85, -1.22, 4.2];
 const AROUND = [-6.85, -1.22, 3.05]; // swims around the float's corner
 const IN = [-6.59, -1.22, 1.4];
 const L = [-6.59, DECK, 1.4];
-// From the ladder he turns left, up the open porch and along the dock-side walkway.
+// From the ladder he turns left up the open porch, steps down, and crosses the dock.
 const B = [-5.5, DECK, 1.4];
-const P1 = [-5.05, DECK, -1.62];
-const P2 = [-4.55, DECK, -2.0];
-// The door side has no fence, so he simply curves out around the stovepipe.
-const Q1 = [-3.55, DECK, -2.38];
-const Q2 = [-2.75, DECK, -2.38];
-const Q3 = [-2.15, DECK, -2.0];
-const Q4 = [-1.4, DECK, -2.0];
-const P3 = [4.5, DECK, -2.0];
-const FOOT = [4.93, DECK, -2.2];
+const P1 = [-5.2, DECK, -1.35];
+const P2 = [-4.95, DK, -2.4];
+const P2B = [-4.3, DK, -2.9];
+const P3 = [4.93, DK, -2.9];
+const FOOT = [4.93, DK, -2.2];
 const TOP = [4.93, ROOF_Y + 0.1, 0.97];
 const LANDING = [4.93, ROOF_Y, 1.43];
 const R1 = [4.0, ROOF_Y, 1.43];
@@ -82,13 +78,10 @@ const BEATS = (() => {
     [4.3, LADDER, AROUND, IN, 'swim', null, false],
     [LADDER, 6.55, IN, L, 'climb', PI2, false],
     [6.55, 7.05, L, B, 'step', null, false],
-    [7.05, 8.6, B, P1, 'walk', null, false],
-    [8.6, 8.95, P1, P2, 'walk', null, false],
-    [8.95, 9.54, P2, Q1, 'walk', null, false],
-    [9.54, 9.98, Q1, Q2, 'walk', null, false],
-    [9.98, 10.37, Q2, Q3, 'walk', null, false],
-    [10.37, 10.78, Q3, Q4, 'walk', null, false],
-    [10.78, 14.0, Q4, P3, 'walk', null, false],
+    [7.05, 8.4, B, P1, 'walk', null, false],
+    [8.4, 8.95, P1, P2, 'step', null, false],
+    [8.95, 9.4, P2, P2B, 'walk', null, false],
+    [9.4, 14.0, P2B, P3, 'walk', null, false],
     [14.0, 14.75, P3, FOOT, 'step', 0, false],
     [14.75, 16.6, FOOT, TOP, 'stairs', 0, false],
     [16.6, 16.95, TOP, LANDING, 'walk', 0, false],
