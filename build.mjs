@@ -127,7 +127,7 @@ function page(scriptTag) {
 <link rel="icon" href="data:," />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1b2028" />
-<title>Ebb &amp; Ember floating sauna, draft diorama</title>
+<title>Ebb &amp; Ember floating sauna diorama</title>
 <style>${css}</style>
 </head>
 <body>

@@ -1,4 +1,4 @@
-// Ebb & Ember floating sauna: stroked-toon diorama, draft 1.
+// Ebb & Ember floating sauna: stroked-toon diorama.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createStrokedToon } from './core/stroked-toon.js';
