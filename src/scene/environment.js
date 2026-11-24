@@ -1,8 +1,10 @@
 // River slab, marina dock, moored boat, floating home and the far bank.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { C, hash } from './kit.js';
 
-export const SLAB = { x0: -15, x1: 23.3, zBack: -23.5, zFront: 10 };
+// Less water off the porch end, with that space moved past the entrance dock.
+export const SLAB = { x0: -17.7, x1: 32.3, zBack: -23.5, zFront: 12 };
 const SLAB_D = SLAB.zFront - SLAB.zBack;
 const SLAB_C = (SLAB.zFront + SLAB.zBack) / 2;
 const SLAB_W = SLAB.x1 - SLAB.x0;
@@ -83,12 +85,12 @@ function buildBank(B) {
     if (x > 20 && x < 22.1) continue; // keep the entrance clear
     B.geo(i % 2 ? C.rock : C.rockDark, new THREE.DodecahedronGeometry(s), x, 0.12, z1 + 0.03, { ry: i, rx: i * 0.5, sy: 0.7, stroke: 0.0012 });
   }
-  [[-13.6, 1.1], [-11.5, 0.9], [-8.8, 1.2], [-6.9, 0.95], [-2.7, 1.3], [-0.6, 1.0], [3.2, 1.4], [5.5, 1.05], [12.2, 1.25], [14.4, 0.95], [16.6, 1.35], [18.9, 1.0]].forEach(([x, s], i) => {
+  [[-16.4, 1.1], [-15.0, 1.2], [-13.6, 1.1], [-11.5, 0.9], [-8.8, 1.2], [-6.9, 0.95], [-2.7, 1.3], [-0.6, 1.0], [3.2, 1.4], [5.5, 1.05], [12.2, 1.25], [14.4, 0.95], [16.6, 1.35], [18.9, 1.0], [23.8, 1.1], [26.1, 1.3], [28.2, 0.95], [30.8, 1.2]].forEach(([x, s], i) => {
     pine(B, x, -22.75 + (i % 2) * 0.28, s, 0.46);
   });
 }
 
-function softDisc() {
+export function softDisc() {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
   const g = c.getContext('2d');
@@ -137,7 +139,7 @@ export function buildEnvironment(scene, kit, look) {
     rose: look.flat(C.rose, { transparent: true, opacity: 0.68, depthWrite: false }),
     deep: look.flat(C.waterDeep, { transparent: true, opacity: 0.7, depthWrite: false }),
   };
-  for (let i = 0; i < 440; i++) {
+  for (let i = 0; i < 640; i++) {
     const x = SLAB.x0 + 0.8 + hash(i + 1) * (SLAB_W - 1.6);
     const z = -21.5 + hash(i + 40) * (SLAB.zFront + 21.2);
     if (z > -5.2 && z < -2.6 && x < 7) continue;
@@ -145,7 +147,7 @@ export function buildEnvironment(scene, kit, look) {
     if (x > 16.7 && x < 21.8 && z > -5.1 && z < 1.6) continue;
     if (z < -19.1 && z > -21.4 && [-11.5, -3.5, 3.2, 14.9].some((h) => Math.abs(x - h) < 2.7)) continue;
     // The sunset path runs diagonally toward the hero corner.
-    const inPath = Math.abs((x + 3.4) - (z - 4) * 0.56) < 2.5 && z > 2.8;
+    const inPath = Math.abs(x - (-9.6 + (5 - z) * 0.45)) < 2.7 && z > -2;
     const kind = inPath ? (i % 3 ? 'peach' : 'rose') : i % 4 === 0 ? 'deep' : 'ripple';
     const m = new THREE.Mesh(stripGeo, mats[kind]);
     const len = (inPath ? 0.8 : 0.45) + hash(i + 70) * 1.5;
@@ -168,11 +170,56 @@ export function buildEnvironment(scene, kit, look) {
     return p;
   });
 
+  // The setting sun's reflection: a soft glow and glittering bands running toward the viewer.
+  const reflection = new THREE.Mesh(stripGeo, look.flat('#ffae62', { map: disc, transparent: true, opacity: 0, depthWrite: false }));
+  reflection.scale.set(6.6, 1, 15);
+  reflection.rotation.y = -0.42;
+  reflection.position.set(-9.7, 0.009, 5.2);
+  reflection.renderOrder = 1;
+  env.add(reflection);
+  const glitter = ['#fff0a8', '#ffc65f', '#ff8a5f', '#ff6f8e'].map((color, tone) => {
+    const parts = [];
+    for (let i = 0; i < 58; i++) {
+      const n = i * 4 + tone;
+      const pz = -1.2 + hash(n + 301) * 12.8;
+      const spread = 0.55 + (pz + 1.2) * (0.08 + tone * 0.03);
+      const px = -9.6 + (5 - pz) * 0.45 + (hash(n + 411) - 0.5) * 2 * spread;
+      if (px < SLAB.x0 + 0.9) continue;
+      const g = stripGeo.clone();
+      g.scale(0.42 + hash(n + 521) * (1.15 + pz * 0.08), 1, 0.055 + hash(n + 631) * 0.06);
+      g.translate(px, 0.012 + tone * 0.0006, pz);
+      parts.push(g);
+    }
+    const m = new THREE.Mesh(mergeGeometries(parts), look.flat(color, { transparent: true, opacity: 0, depthWrite: false }));
+    m.renderOrder = 2;
+    env.add(m);
+    return { m, tone };
+  });
+  let sunPath = 1;
+  let poolGain = 1;
   return {
+    setTime(v) {
+      mats.ripple.color.copy(v.ripple);
+      mats.peach.color.copy(v.pathA);
+      mats.rose.color.copy(v.pathB);
+      mats.deep.color.copy(v.deep);
+      poolGain = v.pool;
+      sunPath = v.sunPath;
+      reflection.visible = sunPath > 0.01;
+      for (const g of glitter) g.m.visible = sunPath > 0.01;
+      for (const p of pools) p.visible = poolGain > 0.01;
+    },
     update(t) {
+      if (sunPath > 0.01) {
+        const w = Math.PI / 12;
+        reflection.material.opacity = sunPath * (0.5 + Math.sin(t * w * 4) * 0.035);
+        for (const g of glitter) {
+          g.m.position.x = Math.sin(t * w * (2 + g.tone) + g.tone * 1.7) * 0.2;
+          g.m.material.opacity = sunPath * (0.72 + Math.sin(t * w * (7 + g.tone * 2) + g.tone) * 0.24);
+        }
+      }
       for (const r of ripples) r.m.position.x = r.x + Math.sin(t * (Math.PI / 12) + r.phase) * r.amp;
-      poolMat.opacity = 0.37 + Math.sin(t * (Math.PI / 12) * 6) * 0.025;
-      void pools;
+      poolMat.opacity = Math.min(0.85, (0.37 + Math.sin(t * (Math.PI / 12) * 6) * 0.025) * poolGain);
     },
   };
 }

@@ -199,6 +199,7 @@ export function buildCast(sauna, kit, look, site) {
 
   return {
     diver: plunger.root,
+    steamMats: puffs.map((m) => m.material),
     actors: [
       { name: 'diver', p: plunger, moving: true },
       { name: 'downpour', p: showerer, moving: true },

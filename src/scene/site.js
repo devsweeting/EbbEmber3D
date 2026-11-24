@@ -3,7 +3,8 @@
 // Portland Downpour on the pavilion's end wall, and the fenced corner lounge.
 // Distances are estimates; bathroom interiors are not modeled.
 import * as THREE from 'three';
-import { C, clamp } from './kit.js';
+import { C, clamp, smooth } from './kit.js';
+import { softDisc } from './environment.js';
 
 export const DK = 0.35;
 export const DECK_AREA = { x0: -6.7, x1: 20.4, z0: -14.1, z1: 1.4 };
@@ -124,6 +125,7 @@ function doorSign(group, look, text, x, y, z) {
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 8;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.21), look.flat(0xffffff, { map: t }));
+  (group.userData.signMats ??= []).push(m.material);
   m.position.set(x, y, z);
   m.rotation.y = Math.PI / 2;
   group.add(m);
@@ -326,7 +328,55 @@ function sideTable(B, x, z) {
   }
 }
 
-function buildLounge(B) {
+// Night replaces the round table with this fire pit, on the same spot.
+function buildFirePit(kit, look, parent) {
+  const group = new THREE.Group();
+  group.position.set(16.75, DK + 0.02, -8.75);
+  group.visible = false;
+  parent.add(group);
+  const P = kit.batch(group);
+  P.cyl(C.rockDark, 0.66, 0.08, 0, 0.04, 0, { rt: 0.68, n: 24, stroke: 0.0012 });
+  P.cyl(C.frame, 0.46, 0.28, 0, 0.21, 0, { rt: 0.6, n: 24, stroke: 0.0014 });
+  P.cyl(C.steel, 0.62, 0.035, 0, 0.36, 0, { rt: 0.64, n: 26, stroke: 0.001 });
+  P.cyl('#25201d', 0.53, 0.015, 0, 0.375, 0, { n: 22, stroke: 0, cast: false });
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    P.geo(i % 2 ? C.rock : C.rockDark, new THREE.DodecahedronGeometry(0.1 + (i % 3) * 0.012), Math.cos(a) * 0.72, 0.09, Math.sin(a) * 0.72, { ry: i, rx: i * 0.6, sy: 0.82, stroke: 0.0009 });
+  }
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + 0.3;
+    P.cyl(i % 2 ? C.trunk : C.cedarDeep, 0.052, 0.72, Math.cos(a) * 0.14, 0.49, Math.sin(a) * 0.14, { n: 7, rx: Math.PI / 2 - 0.42, ry: -a + Math.PI / 2, stroke: 0.0009 });
+  }
+  P.commit();
+
+  const coals = new THREE.Mesh(new THREE.CircleGeometry(0.44, 20), look.flat('#ff7a2f'));
+  coals.rotation.x = -Math.PI / 2;
+  coals.position.y = 0.39;
+  group.add(coals);
+
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), look.flat('#ff9a4d', { map: softDisc(), transparent: true, opacity: 0.26, depthWrite: false }));
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = 0.012;
+  glow.scale.set(6.4, 6.4, 1);
+  glow.renderOrder = 2;
+  group.add(glow);
+
+  const flames = [];
+  const flameMats = ['#ff6a26', '#ff9833', '#ffd36b'].map((c) => look.flat(c));
+  [[0, 0, 0.27, 1.02, 0], [0.16, 0.08, 0.17, 0.72, 0], [-0.15, 0.1, 0.17, 0.78, 0], [0.02, -0.17, 0.17, 0.68, 0],
+    [0.05, 0.04, 0.17, 0.72, 1], [-0.09, -0.05, 0.11, 0.48, 1], [0.12, -0.06, 0.1, 0.44, 1], [0.02, 0.02, 0.09, 0.42, 2]].forEach(([x, z, r, h, tone], i) => {
+    const geo = new THREE.ConeGeometry(r, h, 8);
+    geo.translate(0, h / 2, 0);
+    const m = new THREE.Mesh(geo, flameMats[tone]);
+    m.position.set(x, 0.42, z);
+    m.renderOrder = 3 + tone;
+    group.add(m);
+    flames.push({ m, phase: i * 1.7, rate: 7 + (i % 4) * 2 });
+  });
+  return { group, flames };
+}
+
+function buildLounge(B, kit, parent, look) {
   // Authored in lounge-local z; the lounge group carries the shift back.
   const F = { x0: 10.2, x1: 20.05, z0: -11.55, z1: -3.4 }, top = DK + 0.44;
   fenceRun(B, F.x0, F.z0, F.x1, F.z0);
@@ -347,12 +397,18 @@ function buildLounge(B) {
 
   // Round cedar table on a jute rug.
   B.cyl('#cdb892', 1.55, 0.012, 16.75, DK + 0.018, -8.75, { n: 28, stroke: 0, cast: false, sz: 0.74 });
-  B.cyl(C.cedarLight, 0.68, 0.055, 16.75, DK + 0.5, -8.75, { n: 24, stroke: 0.0014 });
-  B.cyl(C.cedar, 0.56, 0.05, 16.75, DK + 0.44, -8.75, { n: 20, stroke: 0.0006 });
+  const table = new THREE.Group();
+  table.position.set(16.75, DK, -8.75);
+  parent.add(table);
+  const T = kit.batch(table);
+  T.cyl(C.cedarLight, 0.68, 0.055, 0, 0.5, 0, { n: 24, stroke: 0.0014 });
+  T.cyl(C.cedar, 0.56, 0.05, 0, 0.44, 0, { n: 20, stroke: 0.0006 });
   for (let i = 0; i < 4; i++) {
     const a = Math.PI / 4 + (i * Math.PI) / 2;
-    B.box(C.cedarDark, 0.075, 0.44, 0.075, 16.75 + Math.cos(a) * 0.42, DK + 0.23, -8.75 + Math.sin(a) * 0.42, { stroke: 0.0008 });
+    T.box(C.cedarDark, 0.075, 0.44, 0.075, Math.cos(a) * 0.42, 0.23, Math.sin(a) * 0.42, { stroke: 0.0008 });
   }
+  T.commit();
+  const fire = buildFirePit(kit, look, parent);
 
   // Grey-topped timber bench, sling loungers and side table in front of the lounge.
   B.box('#b8afa0', 2.5, 0.08, 0.62, 14.7, DK + 0.47, -6.65, { stroke: 0.0012 });
@@ -370,6 +426,7 @@ function buildLounge(B) {
   planter(B, 19.62, -3.85, 1.2, 'vine');
   planter(B, 19.05, -3.6, 0.72, 'grass');
   planter(B, 19.65, -4.75, 1.0, 'grass');
+  return { table, fire };
 }
 
 function buildForecourt(B) {
@@ -455,6 +512,7 @@ function stringLights(B, group, look) {
   run(corner, [F.x1, DK + 2.0, -7.3], 0.75, 13);
   run(corner, [6.42, 5.9, -2.1], 0.22, 5);
   run(corner, [F.x0, DK + 2.0, -11.0], 0.35, 4);
+  return bulbMat;
 }
 
 export function buildSite(scene, kit, look) {
@@ -471,10 +529,10 @@ export function buildSite(scene, kit, look) {
   lounge.position.z = LOUNGE_DZ;
   group.add(lounge);
   const L = kit.batch(lounge);
-  buildLounge(L);
+  const { table, fire } = buildLounge(L, kit, lounge, look);
   L.commit();
   buildForecourt(B);
-  stringLights(B, group, look);
+  const bulbMat = stringLights(B, group, look);
   B.commit();
 
   // A slightly deeper tone marks the square swim area; the canoes float in it.
@@ -485,10 +543,25 @@ export function buildSite(scene, kit, look) {
   group.add(swim);
   const canoes = buildCanoes(kit, group);
   R.commit();
+  // Toon shading still lights surfaces from behind, so the metal roof uses a material
+  // that ignores the lamp underneath it.
+  roof.traverse((o) => {
+    if (!o.isMesh || !['b76f49', 'cd8660'].includes(o.material.color.getHexString())) return;
+    const metal = new THREE.MeshLambertMaterial({ color: o.material.color });
+    metal.userData.outlineParameters = o.material.userData.outlineParameters;
+    o.material = metal;
+  });
 
   const lamp = new THREE.PointLight(0xffc27d, 10, 11, 1.8);
   lamp.position.set((P.x0 + P.x1) / 2, P.floor + P.h - 0.8, (P.z0 + P.z1) / 2);
   group.add(lamp);
+  // Night lights: the fire pit's flicker and a warm wash across the open deck.
+  const fireLight = new THREE.PointLight(0xff8d45, 0, 12, 1.6);
+  fireLight.position.set(16.75, DK + 1.15, -8.75 + LOUNGE_DZ);
+  const deckLight = new THREE.PointLight(0xffd08a, 0, 17, 1.6);
+  deckLight.position.set(12.2, 3.6, -7.2);
+  group.add(fireLight, deckLight);
+  let nightLevel = 0;
 
   // The Downpour: 60 litres released by one pull of the cord.
   const streams = [];
@@ -512,7 +585,31 @@ export function buildSite(scene, kit, look) {
   const headY = DK + 2.66, trayY = DK + 0.15;
   return {
     group,
+    setTime(v) {
+      lamp.intensity = v.lamp;
+      deckLight.intensity = v.deck;
+      nightLevel = v.night;
+      bulbMat.color.copy(v.bulb);
+      swim.material.color.copy(v.deep);
+      for (const m of group.userData.signMats) m.color.setScalar(v.signs);
+      // The table tucks away first, then the fire pit rises in its place.
+      const out = 1 - smooth(clamp(v.night * 2));
+      const up = smooth(clamp(v.night * 2 - 1));
+      table.visible = out > 0.01;
+      table.scale.setScalar(Math.max(0.01, out));
+      fire.group.visible = up > 0.01;
+      fire.group.scale.setScalar(Math.max(0.01, up));
+    },
     update(t) {
+      const w = Math.PI / 12;
+      fireLight.intensity = nightLevel * nightLevel * 15 * (1 + Math.sin(t * w * 37) * 0.1 + Math.sin(t * w * 59) * 0.06);
+      if (fire.group.visible) {
+        for (const f of fire.flames) {
+          const lick = Math.sin(t * w * f.rate * 4 + f.phase);
+          f.m.scale.set(1 + lick * 0.08, 1 + lick * 0.2 + Math.sin(t * w * f.rate * 7 + f.phase) * 0.08, 1 - lick * 0.06);
+          f.m.rotation.z = Math.sin(t * w * f.rate * 3 + f.phase) * 0.09;
+        }
+      }
       for (const c of canoes) {
         const w = Math.PI / 12;
         c.boat.position.y = 0.05 + Math.sin(t * w * 4 + c.phase) * 0.018;

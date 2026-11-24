@@ -414,6 +414,23 @@ export function buildSauna(kit, look) {
   const hearth = new THREE.PointLight(0xffa766, 7, 7, 1.7);
   hearth.position.set(-1.6, DECK + 1.85, 0.2);
   group.add(hearth);
+  // Night lighting on the river wall and roof deck; off until the sun goes down.
+  const riverLight = new THREE.PointLight(0xffc27d, 0, 10, 1.7);
+  riverLight.position.set(-0.8, DECK + 2.1, 3.5);
+  const roofLight = new THREE.PointLight(0xffd89c, 0, 9, 1.7);
+  roofLight.position.set(-0.6, ROOF.y + 2.0, 0);
+  group.add(riverLight, roofLight);
 
-  return { group, roof, flueTop: new THREE.Vector3(FLUE.x, flueTop + 0.1, FLUE.z) };
+  return {
+    group,
+    roof,
+    flueTop: new THREE.Vector3(FLUE.x, flueTop + 0.1, FLUE.z),
+    setTime(v) {
+      hearth.intensity = v.hearth;
+      riverLight.intensity = v.river;
+      roofLight.intensity = v.roof;
+      glassMat.color.copy(v.glass);
+      glassMat.opacity = v.glassOpacity;
+    },
+  };
 }

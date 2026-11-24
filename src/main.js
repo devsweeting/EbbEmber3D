@@ -7,6 +7,7 @@ import { buildEnvironment, SLAB } from './scene/environment.js';
 import { buildSauna } from './scene/sauna.js';
 import { buildSite } from './scene/site.js';
 import { buildCast, LOOP } from './scene/cast.js';
+import { createTimeOfDay, TIMES } from './scene/timeOfDay.js';
 
 const canvas = document.getElementById('stage');
 const fallback = document.getElementById('fallback');
@@ -23,8 +24,9 @@ const look = createStrokedToon(renderer, { thickness: 0.0026 });
 const kit = createKit(look);
 const scene = new THREE.Scene();
 
-// Dusk rig: low warm sun on the river side, cool sky filling the shadows.
-scene.add(new THREE.HemisphereLight(0xb9c8dd, 0x6b5148, 1.75));
+// The light rig; timeOfDay.js sets its colors, strength and sun position.
+const hemi = new THREE.HemisphereLight(0xb9c8dd, 0x6b5148, 1.75);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffd2a3, 2.75);
 sun.target.position.set(4.2, 0, -6.7);
 scene.add(sun.target);
@@ -44,11 +46,15 @@ const sauna = buildSauna(kit, look);
 scene.add(sauna.group);
 const site = buildSite(scene, kit, look);
 const cast = buildCast(sauna, kit, look, site);
+const time = createTimeOfDay({
+  hemi, sun, fill, kit, env, sauna, site, cast,
+  skies: Object.fromEntries(TIMES.map((n) => [n, document.getElementById(`sky-${n}`)])),
+});
 
 // Camera: long-lens three-quarter view of the river wall and porch.
 const AZ = THREE.MathUtils.degToRad(-24);
 const EL = THREE.MathUtils.degToRad(31);
-const target = new THREE.Vector3(4.2, 1.0, -6.7);
+const target = new THREE.Vector3(0, 1.2, 0); // the sauna sits at the center of the frame
 const dir = new THREE.Vector3(Math.sin(AZ) * Math.cos(EL), Math.sin(EL), Math.cos(AZ) * Math.cos(EL));
 const camera = new THREE.PerspectiveCamera(26, 1, 0.5, 700);
 const controls = new OrbitControls(camera, canvas);
@@ -69,7 +75,7 @@ fitPoints.push(new THREE.Vector3(-4.2, 7.9, -15.65), new THREE.Vector3(6.42, 7.2
 
 let fitDistance = 50;
 function solveFit(aspect) {
-  const fx = 0.95, fy = 0.86;
+  const fx = 0.98, fy = 0.9;
   const tanY = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const probe = new THREE.PerspectiveCamera(camera.fov, aspect, 0.1, 700);
   let lo = 8, hi = 420;
@@ -138,8 +144,11 @@ let clock = 0, last = performance.now();
 const pauseBtn = document.getElementById('pause');
 const roofBtn = document.getElementById('roof');
 const syncButtons = () => {
-  pauseBtn.textContent = frozen === null ? 'Pause' : 'Play';
-  pauseBtn.setAttribute('aria-pressed', String(frozen !== null));
+  const label = frozen === null ? 'Pause' : 'Play';
+  pauseBtn.setAttribute('aria-label', label);
+  pauseBtn.title = label;
+  document.getElementById('icon-pause').toggleAttribute('hidden', frozen !== null);
+  document.getElementById('icon-play').toggleAttribute('hidden', frozen === null);
   roofBtn.textContent = roofGoal ? 'Close roof' : 'Open roof';
   roofBtn.setAttribute('aria-pressed', String(Boolean(roofGoal)));
 };
@@ -156,6 +165,30 @@ roofBtn.addEventListener('click', () => {
 document.getElementById('reset').addEventListener('click', () => { userMoved = false; resetView(); });
 syncButtons();
 
+// Time of day: a three-way radio group, with arrow keys to cycle.
+const timeButtons = TIMES.map((n) => document.getElementById(`time-${n}`));
+const syncTime = () => timeButtons.forEach((b, i) => {
+  const on = TIMES[i] === time.name;
+  b.setAttribute('aria-checked', String(on));
+  b.tabIndex = on ? 0 : -1;
+});
+const chooseTime = (name, focus = false) => {
+  time.set(name, reduced);
+  syncTime();
+  if (focus) timeButtons[TIMES.indexOf(name)].focus();
+};
+timeButtons.forEach((b, i) => {
+  b.addEventListener('click', () => chooseTime(TIMES[i]));
+  b.addEventListener('keydown', (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    chooseTime(TIMES[(i + step + TIMES.length) % TIMES.length], true);
+  });
+});
+if (TIMES.includes(params.get('time'))) time.set(params.get('time'), true);
+syncTime();
+
 function draw() {
   evaluate(frozen ?? clock);
   look.render(scene, camera);
@@ -165,6 +198,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (frozen === null) clock = (clock + dt) % LOOP;
+  time.tick(dt);
   if (roofValue !== roofGoal) {
     const step = dt / 0.55;
     roofValue = roofGoal > roofValue ? Math.min(1, roofValue + step) : Math.max(0, roofValue - step);
@@ -178,6 +212,8 @@ function frame(now) {
 window.__diorama = {
   THREE, scene, camera, renderer, controls, sauna, site, cast, kit, evaluate, LOOP,
   freeze(t) { frozen = t; syncButtons(); draw(); },
+  setTime(name, instant = true) { time.set(name, instant); syncTime(); draw(); },
+  get time() { return time.name; },
   play() { frozen = null; last = performance.now(); syncButtons(); },
   setRoof(open) { roofGoal = roofValue = open ? 1 : 0; applyRoof(); syncButtons(); draw(); },
   resetView() { userMoved = false; resetView(); controls.update(); draw(); },
