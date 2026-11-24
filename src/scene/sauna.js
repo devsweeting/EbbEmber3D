@@ -328,7 +328,6 @@ export function buildSauna(kit, look) {
 
   // Deck rails, leaving the dock gate and ladder gap open.
   rail(S, { axis: 'x', fixed: 2.53, a0: -5.92, a1: 5.92, y: DECK });
-  rail(S, { axis: 'x', fixed: -2.53, a0: -5.92, a1: 1.7, y: DECK });
   rail(S, { axis: 'z', fixed: 5.92, a0: -2.53, a1: 2.53, y: DECK });
   rail(S, { axis: 'z', fixed: -5.92, a0: -2.53, a1: 1.0, y: DECK });
   rail(S, { axis: 'z', fixed: -5.92, a0: 1.8, a1: 2.53, y: DECK, step: 1 });
@@ -379,11 +378,7 @@ export function buildSauna(kit, look) {
   rail(S, { axis: 'z', fixed: 5.29, a0: 1.08, a1: 1.93, y: roofTop, step: 1 });
   rail(S, { axis: 'x', fixed: 1.93, a0: 4.62, a1: 5.29, y: roofTop, step: 1 });
 
-  // Porch: bench, towels, and wet prints from the ladder.
-  S.box(C.cedarLight, 0.5, 0.06, 1.7, -4.72, DECK + 0.44, -1.2, { stroke: 0.001 });
-  for (const z of [-1.85, -0.55]) S.box(C.cedarDark, 0.42, 0.42, 0.07, -4.72, DECK + 0.21, z, { stroke: 0.0008 });
-  S.box(C.towel, 0.38, 0.07, 0.42, -4.72, DECK + 0.5, -0.61, { r: 0.015, stroke: 0.0008 });
-  S.box(C.suitC, 0.36, 0.05, 0.4, -4.72, DECK + 0.56, -0.61, { r: 0.012, stroke: 0.0008 });
+  // Porch: left open as the walkway from the ladder; a towel hangs on the river rail.
   S.box(C.towel, 0.62, 0.4, 0.025, -3.2, DECK + 0.9, 2.615, { stroke: 0.0008 });
   S.box(C.towel, 0.62, 0.025, 0.19, -3.2, DECK + 1.105, 2.53, { stroke: 0.0008 });
   S.box(C.towel, 0.62, 0.3, 0.025, -3.2, DECK + 0.96, 2.445, { stroke: 0.0008 });

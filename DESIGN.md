@@ -7,8 +7,8 @@
 - **Rights:** the user reports approval from the owner to use the business's details. Name, logo and design belong to Ebb & Ember. The sign logo is hand-redrawn from photos, not the source file.
 - **Layout source:** five social photos reviewed locally and not stored in this repository. Pavilion sits directly behind the sauna, with an expanded deck, cedar forecourt beside the sauna, angled cedar lounge floor, and floating homes across the channel.
 - **Scope:** main sauna, walkway, open deck, covered pavilion with bathrooms, Portland Downpour, fenced lounge. East and West private saunas are intentionally excluded.
-- **Loop:** 48 s, two 24 s cycles (backflip off the roof edge, then feet-first jump). Beats per cycle: 1.0 leave roof edge · 2.15 enter river · 4.6 climb ladder · 6.7 walk the river side · 9.7 Downpour pull · 14.6 climb stairs · 17 cross roof · 23.3 back at the edge.
-- **Matched from photos:** charred dock wall, cedar-framed glass door, sign and flue positions, partial dock rail, lengthwise deck boards, LED rails and bench glow, roof stair side, pavilion shed roof and black posts, Downpour tower, L bench, round table, jute rug, planters, sling chair, string lights, teal kayaks.
+- **Loop:** 48 s, two identical 24 s cycles, each with a backflip off the roof edge. The page opens at 22 s so the flip plays within seconds. Beats per cycle: 0.95 leave roof edge · 2.43 enter river · 5.05 climb ladder · 7.05 turn left up the porch, then along the dock-side walkway, curving around the stovepipe · 9.7 Downpour pull · 14.6 climb stairs · 17 cross roof · 23.3 back at the edge.
+- **Matched from photos:** charred dock wall, cedar-framed glass door, sign and flue positions, lengthwise deck boards, LED rails and bench glow, roof stair side, pavilion shed roof and black posts, Downpour tower, L bench, round table, jute rug, planters, sling chair, string lights, teal kayaks.
 - **Estimated, needs confirmation:** all dimensions and distances, exact bathroom door position along the left wall, locker overall size, finish and stand, exact Downpour bucket mechanism.
 - **Confirmed by user:** the "outdoor bucket" is the Portland Downpour.
 - **Confirmed by user:** the bathroom block is on the pavilion's left wall. The back wall, where draft 3 had doors, holds a small lockable locker with nine compartments (3 by 3).
@@ -18,6 +18,8 @@
 - **Confirmed by user:** the main entrance and exit is one thin walkway along the outer edge, running from the front deck past the edge piling to the homes' shore. A thin path behind the lounge wall joins it. There is no walkway beside the Downpour, and there is open water between homes. Exact widths are estimated.
 - **Confirmed by user:** more open river around the sauna so it feels open on the water.
 - **Confirmed by user:** the covered structure is taller than the sauna, including its roof rail. Exact height is estimated.
+- **Confirmed by user:** from the ladder the walking route turns left through the open porch, not past the river-side windows. The porch has no bench. The door side has no fence: it is open wall, and the fence wraps the other three sides of the walkway.
+- **Confirmed by user:** the backflipper is a slightly larger, bald, bearded man with light brown skin in Hawaiian shorts.
 - **Confirmed by user:** the swim area extends about halfway across the nearest front deck section, with deck remaining between it and the edge walkway. A guest backflips off the dive edge.
 - **Confirmed by user:** seated guests, chairs and tables are on the front deck section beside the swim area. The long cedar bench is removed.
 - **Confirmed by user:** the swim-area ladder is on the sauna side, at the first pole near the sauna door and stairs.

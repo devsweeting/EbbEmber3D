@@ -21,6 +21,8 @@ const UPPER_ARM = [[0.001, 0.05], [0.05, 0.01], [0.052, -0.1], [0.042, -0.26], [
 const FOREARM = [[0.001, 0.035], [0.041, 0], [0.043, -0.08], [0.03, -0.24], [0.001, -0.27]];
 
 function torsoProfile(build) {
+  // A big, soft build: broad shoulders over a round belly.
+  if (build === 'big') return [[0.001, -0.02], [0.165, 0], [0.194, 0.09], [0.202, 0.19], [0.194, 0.3], [0.198, 0.4], [0.162, 0.49], [0.06, 0.54], [0.001, 0.55]];
   return build === 'f'
     ? [[0.001, -0.02], [0.135, 0], [0.12, 0.1], [0.125, 0.2], [0.155, 0.32], [0.16, 0.4], [0.135, 0.47], [0.05, 0.53], [0.001, 0.54]]
     : [[0.001, -0.02], [0.14, 0], [0.135, 0.1], [0.15, 0.22], [0.178, 0.34], [0.188, 0.42], [0.15, 0.49], [0.055, 0.54], [0.001, 0.55]];
@@ -28,7 +30,10 @@ function torsoProfile(build) {
 
 function buildHair(H, { hair, hairStyle = 'short', beard, skin, hat }) {
   const y = 0.13;
-  if (hairStyle === 'bald') return;
+  if (hairStyle === 'bald') {
+    if (beard === 'full') buildFullBeard(H, hair);
+    return;
+  }
   if (hairStyle === 'buzz') {
     H.geo(hair, cap(0.106, 1.25), 0, y, -0.008, { rx: -0.28, sy: 1.08, stroke: FINE });
   } else {
@@ -61,6 +66,29 @@ function buildHair(H, { hair, hairStyle = 'short', beard, skin, hat }) {
     H.geo(hair, ball(0.08), 0, 0.058, 0.018, { sx: 0.96, sy: 0.82, sz: 1.02, stroke: FINE });
     H.geo(skin, ball(0.018), 0, 0.066, 0.094, { sx: 1.3, sy: 0.55, stroke: 0, cast: false });
   }
+}
+
+function buildFullBeard(H, color) {
+  H.geo(color, ball(0.09, 14, 10), 0, 0.052, 0.024, { sx: 1.05, sy: 0.98, sz: 1.08, stroke: FINE });
+  H.geo(color, ball(0.056, 10, 8), 0, -0.012, 0.066, { sx: 1.08, sy: 1.18, stroke: FINE });
+  for (const s of [-1, 1]) {
+    H.geo(color, ball(0.026, 7, 6), s * 0.093, 0.105, 0.012, { sx: 0.62, sy: 1.8, stroke: 0 });
+    H.geo(color, ball(0.027, 8, 6), s * 0.03, 0.085, 0.112, { sx: 1.45, sy: 0.62, sz: 0.72, rz: s * -0.2, stroke: 0, cast: false });
+  }
+  H.box('#b8604f', 0.04, 0.009, 0.008, 0, 0.064, 0.123, { r: 0.003, stroke: 0, cast: false });
+}
+
+// Hibiscus print: five petals, a bright center and a leaf, wrapped onto a curved surface.
+const PRINT = { base: '#168a92', band: '#f7ecd4', petals: ['#ff6f59', '#ffd36b', '#fff4df', '#ff8fa3'], eye: '#ffcf4a', leaf: '#0d5a58' };
+function hibiscus(G, rx, rz, y, a, petal, size = 1) {
+  const nx = Math.sin(a), nz = Math.cos(a);
+  const place = (dt, dy, out = 1) => [nx * rx * out + nz * dt, y + dy, nz * rz * out - nx * dt];
+  G.geo(PRINT.leaf, ball(0.012, 6, 4), ...place(0.024 * size, -0.018 * size, 1.002), { ry: a, rz: -0.7, sx: 1.8 * size, sy: 0.8 * size, sz: 0.24, stroke: 0, cast: false });
+  for (let i = 0; i < 5; i++) {
+    const t = (i / 5) * Math.PI * 2 + 0.3;
+    G.geo(petal, ball(0.013, 6, 4), ...place(Math.cos(t) * 0.016 * size, Math.sin(t) * 0.016 * size, 1.006), { ry: a, rz: t, sx: 1.35 * size, sy: 0.95 * size, sz: 0.24, stroke: 0, cast: false });
+  }
+  G.geo(PRINT.eye, ball(0.006, 5, 4), ...place(0, 0, 1.012), { ry: a, sz: 0.5, stroke: 0, cast: false });
 }
 
 function buildHat(H, hat) {
@@ -148,8 +176,15 @@ export function createGuest(kit, spec) {
   const root = new THREE.Group();
   const Pel = batchFor(root);
   const pelvisCol = suit.type === 'onepiece' ? suit.a : suit.type === 'bikini' ? (suit.b || suit.a) : suit.type === 'wrap' ? (suit.b || C.towel) : suit.a;
-  const hipWide = build === 'f' ? 1.06 : 1;
-  Pel.geo(pelvisCol, lathe([[0.001, 0.77], [0.115, 0.79], [0.158, 0.87], [0.15, 0.95], [0.135, 0.99], [0.001, 1.0]]), 0, 0, 0, { sx: hipWide, sz: 0.76, stroke: LINE });
+  const big = build === 'big', limb = big ? 1.2 : 1;
+  const hipWide = big ? 1.28 : build === 'f' ? 1.06 : 1, hipDeep = big ? 0.98 : 0.76;
+  const hawaiian = suit.type === 'hawaiian';
+  Pel.geo(hawaiian ? PRINT.base : pelvisCol, lathe([[0.001, 0.77], [0.115, 0.79], [0.158, 0.87], [0.15, 0.95], [0.135, 0.99], [0.001, 1.0]]), 0, 0, 0, { sx: hipWide, sz: hipDeep, stroke: LINE });
+  if (hawaiian) {
+    Pel.cyl(PRINT.band, 0.158, 0.034, 0, 0.972, 0, { n: 18, sx: hipWide, sz: hipDeep, stroke: FINE, cast: false });
+    for (const s of [-1, 1]) Pel.box(PRINT.band, 0.009, 0.075, 0.007, s * 0.022, 0.925, 0.158, { rz: s * 0.14, stroke: 0, cast: false });
+    for (let i = 0; i < 12; i++) hibiscus(Pel, 0.156 * hipWide, 0.156 * hipDeep, 0.855 + (i % 3) * 0.035, i * 2.399, PRINT.petals[i % 4], 0.86);
+  }
   if (suit.type === 'trunks') Pel.cyl(suit.b || C.white, 0.15, 0.03, 0, 0.965, 0, { n: 16, sz: 0.76, stroke: 0, cast: false });
 
   const chest = new THREE.Group();
@@ -157,8 +192,8 @@ export function createGuest(kit, spec) {
   root.add(chest);
   const Ch = batchFor(chest);
   const profile = torsoProfile(build);
-  Ch.geo(skin, lathe(profile, 16), 0, 0, 0, { sz: 0.72, stroke: LINE });
-  Ch.cyl(skin, 0.05, 0.11, 0, 0.56, 0.004, { rt: 0.046, n: 10, stroke: 0 });
+  Ch.geo(skin, lathe(profile, 16), 0, 0, 0, { sz: big ? 0.88 : 0.72, stroke: LINE });
+  Ch.cyl(skin, big ? 0.07 : 0.05, 0.11, 0, 0.56, 0.004, { rt: big ? 0.064 : 0.046, n: 10, stroke: 0 });
   buildSuitTorso(Ch, spec, profile);
   buildTowel(Ch, spec);
 
@@ -173,13 +208,22 @@ export function createGuest(kit, spec) {
 
   const leg = (side) => {
     const pivot = new THREE.Group();
-    pivot.position.set(side * 0.088, 0.88, 0);
+    pivot.position.set(side * (big ? 0.112 : 0.088), 0.88, 0);
     root.add(pivot);
     const T = batchFor(pivot);
-    T.geo(skin, lathe(THIGH), 0, 0, 0, { sz: 0.94, stroke: LINE });
+    T.geo(skin, lathe(THIGH), 0, 0, 0, { sx: limb, sz: 0.94 * limb, stroke: LINE });
     if (suit.type === 'trunks') {
       T.geo(suit.a, lathe([[0.001, 0.05], [0.088, 0.02], [0.092, -0.12], [0.086, -0.27], [0.001, -0.272]]), 0, 0, 0, { sz: 0.98, stroke: FINE });
       T.box(suit.b || C.white, 0.012, 0.25, 0.034, side * 0.09, -0.13, 0, { stroke: 0, cast: false });
+    }
+    if (hawaiian) {
+      // Loose board-short legs that stop just above the knee.
+      T.geo(PRINT.base, lathe([[0.001, 0.06], [0.112, 0.03], [0.119, -0.1], [0.124, -0.26], [0.127, -0.335], [0.001, -0.34]], 18), 0, 0, 0, { stroke: LINE });
+      T.cyl(PRINT.band, 0.129, 0.018, 0, -0.327, 0, { n: 18, stroke: 0, cast: false });
+      for (let i = 0; i < 15; i++) {
+        const y = -0.035 - (i / 14) * 0.25;
+        hibiscus(T, 0.119 + (-y) * 0.03, 0.119 + (-y) * 0.03, y, side * i * 2.399 + 0.5, PRINT.petals[i % 4]);
+      }
     }
     if (suit.type === 'wrap') {
       T.geo(suit.b || C.towel, lathe([[0.001, 0.05], [0.102, 0.02], [0.108, -0.2], [0.104, -0.42], [0.001, -0.425]]), 0, 0, 0, { sz: 1.02, stroke: FINE });
@@ -189,23 +233,23 @@ export function createGuest(kit, spec) {
     knee.position.y = -0.44;
     pivot.add(knee);
     const K = batchFor(knee);
-    K.geo(skin, lathe(SHIN), 0, 0, 0, { sz: 0.98, stroke: LINE });
+    K.geo(skin, lathe(SHIN), 0, 0, 0, { sx: big ? 1.14 : 1, sz: big ? 1.12 : 0.98, stroke: LINE });
     K.box(skin, 0.092, 0.055, 0.235, 0, -0.41, 0.058, { r: 0.024, stroke: FINE });
     return { pivot, knee };
   };
 
   const arm = (side) => {
     const pivot = new THREE.Group();
-    pivot.position.set(side * (build === 'f' ? 0.195 : 0.218), 0.455, 0);
+    pivot.position.set(side * (big ? 0.25 : build === 'f' ? 0.195 : 0.218), 0.455, 0);
     chest.add(pivot);
     const U = batchFor(pivot);
-    U.geo(skin, ball(0.06), 0, 0, 0, { stroke: FINE });
-    U.geo(skin, lathe(UPPER_ARM), 0, 0, 0, { stroke: LINE });
+    U.geo(skin, ball(big ? 0.066 : 0.06), 0, 0, 0, { stroke: FINE });
+    U.geo(skin, lathe(UPPER_ARM), 0, 0, 0, { sx: big ? 1.14 : 1, sz: big ? 1.14 : 1, stroke: LINE });
     const elbow = new THREE.Group();
     elbow.position.y = -0.28;
     pivot.add(elbow);
     const F = batchFor(elbow);
-    F.geo(skin, lathe(FOREARM), 0, 0, 0, { stroke: LINE });
+    F.geo(skin, lathe(FOREARM), 0, 0, 0, { sx: big ? 1.14 : 1, sz: big ? 1.14 : 1, stroke: LINE });
     const hand = new THREE.Group();
     hand.position.y = -0.255;
     elbow.add(hand);

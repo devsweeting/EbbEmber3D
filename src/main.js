@@ -142,7 +142,8 @@ function evaluate(t) {
 const params = new URLSearchParams(location.search);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let frozen = params.has('t') ? Number(params.get('t')) : reduced ? 1 : null;
-let clock = 0, last = performance.now();
+// Open just before he reaches the edge, so every visitor sees the backflip right away.
+let clock = 22, last = performance.now();
 
 const pauseBtn = document.getElementById('pause');
 const roofBtn = document.getElementById('roof');

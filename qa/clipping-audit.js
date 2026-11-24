@@ -63,7 +63,7 @@ export async function run(d, { dt = 1 / 30, tol = 0.03 } = {}) {
       a.last = r;
       for (const j of a.joints) {
         const q = j.o.quaternion;
-        if (j.has) { const w = 2 * Math.acos(Math.min(1, Math.abs(q.dot(j.q)))) / dt; if (w > a.maxTurn && !(a.name === 'diver' && j.o.name === 'pelvis' && t > 1 && t < 2.8)) { a.maxTurn = w; a.maxTurnT = t; a.maxTurnJoint = j.o.name; } }
+        if (j.has) { const w = 2 * Math.acos(Math.min(1, Math.abs(q.dot(j.q)))) / dt; if (w > a.maxTurn && !(a.name === 'diver' && j.o.name === 'pelvis' && (t % 24) > 0.7 && (t % 24) < 3.2)) { a.maxTurn = w; a.maxTurnT = t; a.maxTurnJoint = j.o.name; } }
         j.q.copy(q); j.has = true;
       }
       if (!a.moving && f % 15 !== 0) continue;
@@ -91,7 +91,7 @@ export async function run(d, { dt = 1 / 30, tol = 0.03 } = {}) {
         if (!a.moving && floor >= 0 && Math.abs(gap) > Math.abs(a.float)) { a.float = gap; a.floatT = t; }
         if (a.moving && floor >= 0) {
           const prev = a.feetLast[low.part];
-          const straight = a.name !== 'diver' || ((t % 24) > 7.5 && (t % 24) < 11.3);
+          const straight = a.name !== 'diver' || ((t % 24) > 11 && (t % 24) < 13.8);
           if (straight && gap < 0.05 && prev && prev.f === f - 1) { const sl = Math.hypot(low.x - prev.x, low.z - prev.z) / dt; if (sl > a.slip) { a.slip = sl; a.slipT = t; } }
           a.feetLast[low.part] = { x: low.x, z: low.z, f };
         }
