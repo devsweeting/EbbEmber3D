@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://www.ebbandember.com/">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-on-dark.svg">
-      <img src="assets/logo-on-light.svg" alt="Ebb & Ember" width="380">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-cream.svg">
+      <img src="assets/logo-charcoal.svg" alt="Ebb & Ember" width="380">
     </picture>
   </a>
 </p>
