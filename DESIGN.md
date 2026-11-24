@@ -23,6 +23,10 @@
 - **Confirmed by user:** the swim-area ladder is on the sauna side, at the first pole near the sauna door and stairs.
 - **Confirmed by user:** inside the sauna the door is pushed into the corner, the seating wraps in an L into the freed space, and windows fully wrap the sauna room.
 - **Confirmed by user:** the bathroom, shower and utility rooms push out from the left wall to the lockers, so each door has a room behind it.
+- **Confirmed by user:** Dusk should be a romantic, vivid Pacific Northwest sunset, with violet, magenta, coral and gold.
+- **Confirmed by user:** the sauna is centered in frame, with more open water beyond the entrance dock.
+- **Confirmed by user:** Night has a brighter starry sky. Open water on the porch side is reduced 40%, with that space moved past the entrance dock.
+- **Confirmed by user:** each time-of-day button uses active colors that match that time.
 - **Confirmed by user:** the roof has an open dive edge. The stairs are on the end facing the swim area, run parallel to that end wall, and climb from the dock side toward the river side.
 - **Guests:** authored jointed rig with elbows, knees, torso and head turns, faces, hands, varied hair, swimwear, towels, hats and small props. They are fictional, not portraits of people in the photos.
 - **Not done:** full body-collision audit; bathroom interiors.
