@@ -95,9 +95,12 @@ function solveFit(aspect) {
   return hi;
 }
 
+// The opening view sits closer than the full-river fit; scroll out to see it all.
+const HERO_ZOOM = 0.68;
+
 function resetView() {
   controls.target.copy(target);
-  camera.position.copy(target).addScaledVector(dir, fitDistance);
+  camera.position.copy(target).addScaledVector(dir, fitDistance * HERO_ZOOM);
   camera.lookAt(target);
   controls.update();
 }
