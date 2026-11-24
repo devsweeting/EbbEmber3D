@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { copyFile, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { copyFile, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
 
 const minify = process.argv.includes('--minify');
 
@@ -157,7 +157,11 @@ ${scriptTag}
 
 await writeFile('index.html', page('<script src="./dist/app.js"></script>'));
 await writeFile('ebbember3d.html', page(`<script>${safeJs}</script>`));
+// dist/ is the deployable site, so it gets its own entry page.
+await writeFile('dist/index.html', page('<script src="./app.js"></script>'));
 
-await copyFile('qa/clipping-audit.js', 'dist/clipping-audit.js');
+// The QA audit is a development tool and stays out of production builds.
+if (minify) await rm('dist/clipping-audit.js', { force: true });
+else await copyFile('qa/clipping-audit.js', 'dist/clipping-audit.js');
 
-console.log(`built dist/app.js (${(js.length / 1024).toFixed(0)} kB), index.html, ebbember3d.html`);
+console.log(`built dist/app.js (${(js.length / 1024).toFixed(0)} kB), dist/index.html, index.html, ebbember3d.html`);

@@ -1,0 +1,9 @@
+# Private references and local output never go to Vercel, even from a CLI deploy.
+.claude/
+compare/
+refs/ebb-ember/
+dist/
+index.html
+ebbember3d.html
+node_modules/
+.DS_Store
