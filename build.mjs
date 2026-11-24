@@ -102,7 +102,9 @@ const css = `
   }
   .control-set { display: flex; gap: 4px; }
   #times { padding-right: 4px; border-right: 1px solid #454c55; }
-  @media (max-width: 560px) { #times { padding-right: 0; border-right: 0; } #controls button { min-width: 70px; padding: 0 9px; } }
+  @media (max-width: 560px) { #controls button { min-width: 70px; padding: 0 9px; } }
+  /* Phones, in either orientation, keep only the time of day buttons. */
+  @media (max-width: 560px), (pointer: coarse) and (max-height: 500px) { #times { padding-right: 0; border-right: 0; } #view-controls { display: none; } }
   #controls button:hover { background: #343b44; }
   #controls button[aria-pressed="true"], #controls button[aria-checked="true"] { background: #e9c08f; color: #1b2026; }
   #controls button.icon-button { display: grid; place-items: center; width: 40px; min-width: 40px; padding: 0; }
@@ -137,7 +139,7 @@ function page(scriptTag) {
     <button id="time-dusk" type="button" role="radio" aria-checked="true">Dusk</button>
     <button id="time-night" type="button" role="radio" aria-checked="false">Night</button>
   </div>
-  <div class="control-set">
+  <div id="view-controls" class="control-set">
     <button id="pause" class="icon-button" type="button" aria-label="Pause" title="Pause">
       <svg id="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
       <svg id="icon-play" viewBox="0 0 24 24" aria-hidden="true" hidden><path class="solid" d="M8 5.5v13l10.5-6.5z"/></svg>
