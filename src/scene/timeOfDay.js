@@ -54,7 +54,7 @@ export function createTimeOfDay({ hemi, sun, fill, kit, env, sauna, site, cast, 
   const now = {};
   for (const key of COLOR_KEYS) now[key] = new THREE.Color();
   now.sunPos = new THREE.Vector3();
-  let from = PRESETS.dusk, to = PRESETS.dusk, progress = 1, name = 'dusk';
+  let from = PRESETS.morning, to = PRESETS.morning, progress = 1, name = 'morning';
 
   function apply() {
     const k = smooth(progress);

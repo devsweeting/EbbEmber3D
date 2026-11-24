@@ -129,6 +129,10 @@ const css = `
   #fallback[hidden] { display: none; }
 `;
 
+// Link previews need absolute URLs.
+const SITE_URL = 'https://ebbember3d.vercel.app';
+const SHARE_TEXT = "Sweat. Plunge. Backflip. Repeat. A tiny, hand-built 3D diorama of Portland's floating sauna on the Columbia River.";
+
 function page(scriptTag) {
   return `<!doctype html>
 <html lang="en">
@@ -138,15 +142,30 @@ function page(scriptTag) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1b2028" />
 <title>Ebb &amp; Ember floating sauna diorama</title>
+<meta name="description" content="${SHARE_TEXT}" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Ebb &amp; Ember" />
+<meta property="og:title" content="Ebb &amp; Ember floating sauna diorama" />
+<meta property="og:description" content="${SHARE_TEXT}" />
+<meta property="og:url" content="${SITE_URL}/" />
+<meta property="og:image" content="${SITE_URL}/og-image.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="The Ebb &amp; Ember logo above a 3D miniature of the floating sauna at sunset." />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Ebb &amp; Ember floating sauna diorama" />
+<meta name="twitter:description" content="${SHARE_TEXT}" />
+<meta name="twitter:image" content="${SITE_URL}/og-image.jpg" />
 <style>${css}</style>
 </head>
 <body>
-<div id="sky-morning" class="sky"></div><div id="sky-dusk" class="sky on"></div><div id="sky-night" class="sky"></div>
+<div id="sky-morning" class="sky on"></div><div id="sky-dusk" class="sky"></div><div id="sky-night" class="sky"></div>
 <canvas id="stage" aria-label="Miniature diorama of a floating sauna on a river. Drag to rotate, scroll to zoom." tabindex="0"></canvas>
 <div id="controls" role="group" aria-label="Scene controls">
   <div id="times" class="control-set" role="radiogroup" aria-label="Time of day">
-    <button id="time-morning" type="button" role="radio" aria-checked="false">Morning</button>
-    <button id="time-dusk" type="button" role="radio" aria-checked="true">Dusk</button>
+    <button id="time-morning" type="button" role="radio" aria-checked="true">Day</button>
+    <button id="time-dusk" type="button" role="radio" aria-checked="false">Dusk</button>
     <button id="time-night" type="button" role="radio" aria-checked="false">Night</button>
   </div>
   <div id="view-controls" class="control-set">
@@ -174,6 +193,7 @@ await writeFile('index.html', page('<script src="./dist/app.js"></script>'));
 await writeFile('ebbember3d.html', page(`<script>${safeJs}</script>`));
 // dist/ is the deployable site, so it gets its own entry page.
 await writeFile('dist/index.html', page('<script src="./app.js"></script>'));
+await copyFile('assets/og-image.jpg', 'dist/og-image.jpg');
 
 // The QA audit is a development tool and stays out of production builds.
 if (minify) await rm('dist/clipping-audit.js', { force: true });
