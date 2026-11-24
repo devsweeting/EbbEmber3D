@@ -1,0 +1,22 @@
+{
+  "audit": "qa/clipping-audit.js, run in the page at ?qa",
+  "loopSeconds": 48,
+  "framesSampled": 1440,
+  "sampleRateFps": 30,
+  "seatedAndStandingGuestsSampledEverySeconds": 0.5,
+  "solidParts": 2293,
+  "vertexChecks": 9352200,
+  "clipToleranceMeters": 0.03,
+  "clipsAboveTolerance": 0,
+  "loopSeamExact": true,
+  "frozenFramesRepeatable": true,
+  "walkingPlantedFootSpeedMedianMps": 0.116,
+  "walkingPlantedFootSpeedP95Mps": 1.444,
+  "knownLimits": [
+    "Sampled at 30 fps, so a contact shorter than one frame could be missed.",
+    "Guests are tested against the set, not against each other.",
+    "Contacts under 3 cm are treated as resting contact.",
+    "Feet can still slide briefly at sharp turns and step transitions.",
+    "The fastest arm movement, 41 rad/s at 2.27 s, happens underwater after entry."
+  ]
+}
