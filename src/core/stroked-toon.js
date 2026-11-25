@@ -1,6 +1,8 @@
 // Optional stroked-toon / illustrated-miniature preset, Three.js r170.
 // Apply ONLY after the project's style-choice confirmation (see SKILL.md).
 // This replaces PixelPost; it does not supply scene geometry, lights, or UI.
+// Project change: an optional pixel mode renders the same toon scene and outlines
+// once into a low-resolution target, then scales it up with nearest filtering.
 import * as THREE from 'three';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
@@ -65,16 +67,56 @@ export function createStrokedToon(renderer, {
     ownedMaterials.add(material);
     return material;
   }
+  // Pixel mode: one low-res pass, then a single nearest-neighbour upscale.
+  const target = new THREE.WebGLRenderTarget(1, 1, {
+    minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
+    depthBuffer: true, stencilBuffer: false, colorSpace: THREE.SRGBColorSpace,
+  });
+  target.texture.generateMipmaps = false;
+  const screenMat = new THREE.MeshBasicMaterial({ map: target.texture, depthTest: false, depthWrite: false, transparent: true });
+  const screen = new THREE.Scene();
+  screen.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), screenMat));
+  const screenCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const size = new THREE.Vector2();
+  let pixelRows = 0;
+  // Outlines are projected, so they need to be thicker to survive the low-res grid.
+  function scaleOutlines(k) {
+    for (const m of ownedMaterials) {
+      const o = m.userData.outlineParameters;
+      if (!o) continue;
+      o.base ??= o.thickness;
+      o.thickness = o.base * k;
+    }
+  }
+
   return {
     preset: 'stroked-toon', effect, ramp, toon, flat,
+    get pixelRows() { return pixelRows; },
+    // rows = 0 turns pixel mode off; otherwise the image is this many pixels tall.
+    setPixel(rows = 0, outlineScale = 1) {
+      pixelRows = Math.max(0, Math.round(rows));
+      scaleOutlines(pixelRows ? outlineScale : 1);
+    },
     // Use this instead of renderer.render / PixelPost.render, not after them.
-    render(scene, camera) { effect.render(scene, camera); },
+    render(scene, camera) {
+      if (!pixelRows) { effect.render(scene, camera); return; }
+      renderer.getSize(size);
+      const h = pixelRows, w = Math.max(1, Math.round(h * size.x / Math.max(1, size.y)));
+      if (target.width !== w || target.height !== h) target.setSize(w, h);
+      const previous = renderer.getRenderTarget();
+      try {
+        renderer.setRenderTarget(target); renderer.clear(); effect.render(scene, camera);
+        renderer.setRenderTarget(previous); renderer.clear(); renderer.render(screen, screenCam);
+      } finally { renderer.setRenderTarget(previous); }
+    },
     // Re-create for a preset switch; restore previous renderer settings there.
     // OutlineEffect r170 has no public dispose(); renderer lifetime owns its cache.
     dispose() {
       for (const material of ownedMaterials) material.dispose();
       ownedMaterials.clear();
       ramp.dispose();
+      target.dispose();
+      screenMat.dispose();
     },
   };
 }

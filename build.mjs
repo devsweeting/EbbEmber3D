@@ -174,6 +174,9 @@ function page(scriptTag) {
       <svg id="icon-play" viewBox="0 0 24 24" aria-hidden="true" hidden><path class="solid" d="M8 5.5v13l10.5-6.5z"/></svg>
     </button>
     <button id="roof" type="button">Open roof</button>
+    <button id="pixel" class="icon-button" type="button" aria-pressed="false" aria-label="Pixel style" title="Pixel style">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M4 4h5v5H4zM9.5 9.5h5v5h-5zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"/></svg>
+    </button>
     <button id="reset" class="icon-button" type="button" aria-label="Reset view" title="Reset view">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9L4 8.5"/><path d="M4 3.5v5h5"/></svg>
     </button>

@@ -18,6 +18,7 @@
 - **Confirmed by user:** the main entrance and exit is one thin walkway along the outer edge, running from the front deck past the edge piling to the homes' shore. A thin path behind the lounge wall joins it. There is no walkway beside the Downpour, and there is open water between homes. Exact widths are estimated.
 - **Confirmed by user:** more open river around the sauna so it feels open on the water.
 - **Confirmed by user:** the covered structure is taller than the sauna, including its roof rail. Exact height is estimated.
+- **Confirmed by user:** a Pixel style button switches the stroked-toon scene to a pixel + stroke look: the same toon scene and outlines rendered once at 260 rows and scaled up with nearest filtering. Desktop only, like the other view controls; `?style=pixel` opens in it.
 - **Confirmed by user:** from the ladder the walking route turns left through the open porch, not past the river-side windows. The porch has no bench. The door side has no fence and no walkway of its own: the sauna's platform ends at that wall, and the dock in front is the walkway. The fence wraps the other three sides.
 - **Confirmed by user:** the backflipper is a slightly larger, bald, bearded man with light brown skin in Hawaiian shorts.
 - **Confirmed by user:** the swim area extends about halfway across the nearest front deck section, with deck remaining between it and the edge walkway. A guest backflips off the dive edge.
