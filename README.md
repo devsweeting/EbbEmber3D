@@ -39,7 +39,7 @@ Then open **http://localhost:4180** and feel the steam.
 - **Dusk** for a full-send Pacific Northwest sunset.
 - **Night** for stars, glowing lights, and a crackling fire pit.
 - **Open roof** to peek inside the sauna.
-- **Pixel** to flip the whole scene into retro pixel art.
+- **Pixel** to go retro: click once for half pixel, again for full pixel, and once more to go back.
 - **Pause** to catch the backflip mid-air.
 - **Reset** when you've drifted too far downriver.
 

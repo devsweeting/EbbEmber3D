@@ -168,18 +168,24 @@ roofBtn.addEventListener('click', () => {
 });
 document.getElementById('reset').addEventListener('click', () => { userMoved = false; resetView(); });
 
-// Pixel style: the same scene drawn on a coarse grid, about 260 pixels tall.
-const PIXEL_ROWS = 260, PIXEL_OUTLINE = 2.6;
+// Pixel style cycles on each click: smooth, half pixel (finer grid), full pixel.
+const STYLES = [
+  { name: 'smooth', rows: 0, outline: 1, pressed: 'false', next: 'Half pixel style' },
+  { name: 'half', rows: 460, outline: 1.6, pressed: 'mixed', next: 'Full pixel style' },
+  { name: 'pixel', rows: 260, outline: 2.6, pressed: 'true', next: 'Smooth style' },
+];
 const pixelBtn = document.getElementById('pixel');
-const setPixel = (on) => {
-  look.setPixel(on ? PIXEL_ROWS : 0, PIXEL_OUTLINE);
-  pixelBtn.setAttribute('aria-pressed', String(on));
-  const label = on ? 'Smooth style' : 'Pixel style';
-  pixelBtn.setAttribute('aria-label', label);
-  pixelBtn.title = label;
+let styleIndex = 0;
+const setStyle = (index) => {
+  styleIndex = (index + STYLES.length) % STYLES.length;
+  const s = STYLES[styleIndex];
+  look.setPixel(s.rows, s.outline);
+  pixelBtn.setAttribute('aria-pressed', s.pressed);
+  pixelBtn.setAttribute('aria-label', s.next);
+  pixelBtn.title = s.next;
 };
-pixelBtn.addEventListener('click', () => setPixel(!look.pixelRows));
-setPixel(params.get('style') === 'pixel');
+pixelBtn.addEventListener('click', () => setStyle(styleIndex + 1));
+setStyle(Math.max(0, STYLES.findIndex((s) => s.name === params.get('style'))));
 syncButtons();
 
 // Time of day: a three-way radio group, with arrow keys to cycle.
@@ -231,7 +237,8 @@ window.__diorama = {
   freeze(t) { frozen = t; syncButtons(); draw(); },
   setTime(name, instant = true) { time.set(name, instant); syncTime(); draw(); },
   get time() { return time.name; },
-  setPixel(on) { setPixel(on); draw(); },
+  setStyle(name) { setStyle(Math.max(0, STYLES.findIndex((s) => s.name === name))); draw(); },
+  get style() { return STYLES[styleIndex].name; },
   play() { frozen = null; last = performance.now(); syncButtons(); },
   setRoof(open) { roofGoal = roofValue = open ? 1 : 0; applyRoof(); syncButtons(); draw(); },
   resetView() { userMoved = false; resetView(); controls.update(); draw(); },

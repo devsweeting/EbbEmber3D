@@ -107,6 +107,7 @@ const css = `
   @media (max-width: 560px), (pointer: coarse) and (max-height: 500px) { #times { padding-right: 0; border-right: 0; } #view-controls { display: none; } }
   #controls button:hover { background: #343b44; }
   #controls button[aria-pressed="true"], #controls button[aria-checked="true"] { background: #e9c08f; color: #1b2026; }
+  #controls button[aria-pressed="mixed"] { background: linear-gradient(135deg, #e9c08f 50%, #3a414a 50%); color: #1b2026; }
   #controls button.icon-button { display: grid; place-items: center; width: 40px; min-width: 40px; padding: 0; }
   .icon-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .icon-button svg[hidden] { display: none; }
@@ -174,7 +175,7 @@ function page(scriptTag) {
       <svg id="icon-play" viewBox="0 0 24 24" aria-hidden="true" hidden><path class="solid" d="M8 5.5v13l10.5-6.5z"/></svg>
     </button>
     <button id="roof" type="button">Open roof</button>
-    <button id="pixel" class="icon-button" type="button" aria-pressed="false" aria-label="Pixel style" title="Pixel style">
+    <button id="pixel" class="icon-button" type="button" aria-pressed="false" aria-label="Half pixel style" title="Half pixel style">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M4 4h5v5H4zM9.5 9.5h5v5h-5zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"/></svg>
     </button>
     <button id="reset" class="icon-button" type="button" aria-label="Reset view" title="Reset view">
