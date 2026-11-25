@@ -102,9 +102,10 @@ const css = `
   }
   .control-set { display: flex; gap: 4px; }
   #times { padding-right: 4px; border-right: 1px solid #454c55; }
-  @media (max-width: 560px) { #controls button { min-width: 70px; padding: 0 9px; } }
-  /* Phones, in either orientation, keep only the time of day buttons. */
-  @media (max-width: 560px), (pointer: coarse) and (max-height: 500px) { #times { padding-right: 0; border-right: 0; } #view-controls { display: none; } }
+  @media (max-width: 560px) { #controls button { min-width: 62px; padding: 0 7px; } }
+  @media (max-width: 380px) { #controls button { min-width: 56px; padding: 0 5px; } }
+  /* Phones, in either orientation, keep the time of day buttons and the Pixel button. */
+  @media (max-width: 560px), (pointer: coarse) and (max-height: 500px) { #view-controls > :not(#pixel) { display: none; } }
   #controls button:hover { background: #343b44; }
   #controls button[aria-pressed="true"], #controls button[aria-checked="true"] { background: #e9c08f; color: #1b2026; }
   #controls button[aria-pressed="mixed"] { background: linear-gradient(135deg, #e9c08f 50%, #3a414a 50%); color: #1b2026; }
@@ -162,7 +163,7 @@ function page(scriptTag) {
 </head>
 <body>
 <div id="sky-morning" class="sky on"></div><div id="sky-dusk" class="sky"></div><div id="sky-night" class="sky"></div>
-<canvas id="stage" aria-label="Miniature diorama of a floating sauna on a river. Drag to rotate, scroll to zoom." tabindex="0"></canvas>
+<canvas id="stage" aria-label="Miniature diorama of a floating sauna on a river. Drag to rotate, right-drag or two fingers to move, scroll or pinch to zoom." tabindex="0"></canvas>
 <div id="controls" role="group" aria-label="Scene controls">
   <div id="times" class="control-set" role="radiogroup" aria-label="Time of day">
     <button id="time-morning" type="button" role="radio" aria-checked="true">Day</button>

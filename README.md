@@ -34,6 +34,7 @@ Then open **http://localhost:4180** and feel the steam.
 ## Things to do
 
 - **Drag** to walk around the dock.
+- **Right-drag** (or two fingers) to slide over to another spot.
 - **Scroll** to get a closer look.
 - **Day** for bright skies and a clear look at the river.
 - **Dusk** for a full-send Pacific Northwest sunset.

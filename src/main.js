@@ -14,13 +14,17 @@ const fallback = document.getElementById('fallback');
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  // Only QA screenshots need the drawing buffer kept after each frame.
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: new URLSearchParams(location.search).has('qa') });
 } catch {
   fallback.hidden = false;
   throw new Error('WebGL2 unavailable');
 }
 
 const look = createStrokedToon(renderer, { thickness: 0.0026 });
+// Shadows are redrawn only when something that casts them changes (see frame()).
+renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.needsUpdate = true;
 const kit = createKit(look);
 const scene = new THREE.Scene();
 
@@ -59,7 +63,11 @@ const dir = new THREE.Vector3(Math.sin(AZ) * Math.cos(EL), Math.sin(EL), Math.co
 const camera = new THREE.PerspectiveCamera(26, 1, 0.5, 700);
 const controls = new OrbitControls(camera, canvas);
 controls.target.copy(target);
-controls.enablePan = false;
+// Drag rotates; right-drag, Shift-drag or two fingers slide the view along the deck.
+controls.enablePan = true;
+controls.screenSpacePanning = false;
+controls.panSpeed = 0.9;
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 controls.enableDamping = true;
 controls.dampingFactor = 0.09;
 controls.maxPolarAngle = Math.PI * 0.485;
@@ -108,6 +116,14 @@ function resetView() {
 let userMoved = false;
 controls.addEventListener('start', () => { userMoved = true; });
 
+// Render on demand: a still, paused scene costs nothing until something changes.
+let dirty = true;
+const invalidate = (shadows = false) => {
+  dirty = true;
+  if (shadows) renderer.shadowMap.needsUpdate = true;
+};
+controls.addEventListener('change', () => invalidate());
+
 function resize() {
   const w = Math.max(2, canvas.clientWidth);
   const h = Math.max(2, canvas.clientHeight);
@@ -118,6 +134,7 @@ function resize() {
   controls.minDistance = fitDistance * 0.26;
   controls.maxDistance = fitDistance * 1.25;
   if (!userMoved) resetView();
+  invalidate();
 }
 addEventListener('resize', resize);
 resize();
@@ -160,13 +177,15 @@ pauseBtn.addEventListener('click', () => {
   if (frozen === null) frozen = clock;
   else { clock = frozen; frozen = null; last = performance.now(); }
   syncButtons();
+  invalidate(true);
 });
 roofBtn.addEventListener('click', () => {
   roofGoal = roofGoal ? 0 : 1;
   if (reduced) { roofValue = roofGoal; applyRoof(); }
   syncButtons();
+  invalidate(true);
 });
-document.getElementById('reset').addEventListener('click', () => { userMoved = false; resetView(); });
+document.getElementById('reset').addEventListener('click', () => { userMoved = false; resetView(); invalidate(); });
 
 // Pixel style cycles on each click: smooth, half pixel (finer grid), full pixel.
 const STYLES = [
@@ -183,6 +202,7 @@ const setStyle = (index) => {
   pixelBtn.setAttribute('aria-pressed', s.pressed);
   pixelBtn.setAttribute('aria-label', s.next);
   pixelBtn.title = s.next;
+  invalidate();
 };
 pixelBtn.addEventListener('click', () => setStyle(styleIndex + 1));
 setStyle(Math.max(0, STYLES.findIndex((s) => s.name === params.get('style'))));
@@ -198,6 +218,7 @@ const syncTime = () => timeButtons.forEach((b, i) => {
 const chooseTime = (name, focus = false) => {
   time.set(name, reduced);
   syncTime();
+  invalidate(true);
   if (focus) timeButtons[TIMES.indexOf(name)].focus();
 };
 timeButtons.forEach((b, i) => {
@@ -212,35 +233,59 @@ timeButtons.forEach((b, i) => {
 if (TIMES.includes(params.get('time'))) time.set(params.get('time'), true);
 syncTime();
 
-function draw() {
+function draw(shadows = false) {
+  if (shadows) renderer.shadowMap.needsUpdate = true;
   evaluate(frozen ?? clock);
   look.render(scene, camera);
 }
 
+// Keep the look-at point over the diorama, so panning can't lose the scene.
+const panDelta = new THREE.Vector3();
+function clampPan() {
+  const t = controls.target;
+  panDelta.set(
+    THREE.MathUtils.clamp(t.x, SLAB.x0 + 2, SLAB.x1 - 2) - t.x,
+    target.y - t.y,
+    THREE.MathUtils.clamp(t.z, SLAB.zBack + 2, SLAB.zFront - 2) - t.z,
+  );
+  if (panDelta.lengthSq() === 0) return;
+  t.add(panDelta);
+  camera.position.add(panDelta);
+}
+
+let frameCount = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (frozen === null) clock = (clock + dt) % LOOP;
-  time.tick(dt);
-  if (roofValue !== roofGoal) {
+  const playing = frozen === null;
+  if (playing) clock = (clock + dt) % LOOP;
+  const fading = time.tick(dt);
+  const roofMoving = roofValue !== roofGoal;
+  if (roofMoving) {
     const step = dt / 0.55;
     roofValue = roofGoal > roofValue ? Math.min(1, roofValue + step) : Math.max(0, roofValue - step);
     applyRoof();
   }
-  controls.update();
-  draw();
+  controls.update(); // damping fires 'change', which marks the frame dirty
+  clampPan();
+  // Moving guests refresh their shadows at 30 fps; fades and the roof every frame.
+  if (fading || roofMoving || (playing && frameCount++ % 2 === 0)) renderer.shadowMap.needsUpdate = true;
+  if (playing || fading || roofMoving || dirty) {
+    draw();
+    dirty = false;
+  }
   requestAnimationFrame(frame);
 }
 
 window.__diorama = {
   THREE, scene, camera, renderer, controls, sauna, site, cast, kit, evaluate, LOOP,
-  freeze(t) { frozen = t; syncButtons(); draw(); },
-  setTime(name, instant = true) { time.set(name, instant); syncTime(); draw(); },
+  freeze(t) { frozen = t; syncButtons(); draw(true); },
+  setTime(name, instant = true) { time.set(name, instant); syncTime(); draw(true); },
   get time() { return time.name; },
   setStyle(name) { setStyle(Math.max(0, STYLES.findIndex((s) => s.name === name))); draw(); },
   get style() { return STYLES[styleIndex].name; },
-  play() { frozen = null; last = performance.now(); syncButtons(); },
-  setRoof(open) { roofGoal = roofValue = open ? 1 : 0; applyRoof(); syncButtons(); draw(); },
+  play() { frozen = null; last = performance.now(); syncButtons(); invalidate(true); },
+  setRoof(open) { roofGoal = roofValue = open ? 1 : 0; applyRoof(); syncButtons(); draw(true); },
   resetView() { userMoved = false; resetView(); controls.update(); draw(); },
   view(azDeg, elDeg, zoom = 1) {
     userMoved = true;
