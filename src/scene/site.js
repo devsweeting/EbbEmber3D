@@ -4,6 +4,7 @@
 // Distances are estimates; bathroom interiors are not modeled.
 import * as THREE from 'three';
 import { C, clamp, smooth } from './kit.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { softDisc } from './environment.js';
 import { FRONT } from './sauna.js';
 
@@ -502,11 +503,10 @@ function stringLights(B, group, look) {
     }
     for (let i = 0; i <= bulbs; i++) {
       const p = point(i / bulbs);
-      const bulb = new THREE.Mesh(bulbGeo, bulbMat);
-      bulb.position.set(p.x, p.y - 0.09, p.z);
-      group.add(bulb);
+      bulbParts.push(bulbGeo.clone().translate(p.x, p.y - 0.09, p.z));
     }
   };
+  const bulbParts = [];
   const F = FENCE, top = DK + 1.98;
   run([F.x0, top, F.z0 + 0.07], [15.1, top, F.z0 + 0.07], 0.16, 8);
   run([15.1, top, F.z0 + 0.07], [F.x1 - 0.07, top, F.z0 + 0.07], 0.16, 8);
@@ -517,6 +517,7 @@ function stringLights(B, group, look) {
   run(corner, [F.x1, DK + 2.0, -7.3], 0.75, 13);
   run(corner, [6.42, 5.9, -2.1], 0.22, 5);
   run(corner, [F.x0, DK + 2.0, -11.0], 0.35, 4);
+  group.add(new THREE.Mesh(mergeGeometries(bulbParts), bulbMat)); // every bulb in one draw
   return bulbMat;
 }
 
@@ -527,7 +528,7 @@ export function buildSite(scene, kit, look) {
 
   buildDeck(B);
   const { roof, w, span } = buildPavilion(B, group, look);
-  const R = kit.batch(roof);
+  const R = kit.batch(roof, { byColor: true }); // its metal colours get a Lambert swap below
   dressRoof(R, w, span);
   buildDownpour(B);
   const lounge = new THREE.Group();

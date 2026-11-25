@@ -124,7 +124,9 @@ export function buildEnvironment(scene, kit, look) {
   glowBatch.commit();
 
   // Flat water marks: drifting ripples and the sunset laid across the river.
-  const ripples = [];
+  // One merged mesh per colour; each ripple drifts in the vertex shader.
+  const rippleParts = { ripple: [], peach: [], rose: [], deep: [] };
+  const drift = { value: 0 };
   const stripGeo = new THREE.PlaneGeometry(1, 1);
   stripGeo.rotateX(-Math.PI / 2);
   const mats = {
@@ -143,13 +145,26 @@ export function buildEnvironment(scene, kit, look) {
     // The sunset path runs diagonally toward the hero corner.
     const inPath = Math.abs(x - (-9.6 + (5 - z) * 0.45)) < 2.7 && z > -2;
     const kind = inPath ? (i % 3 ? 'peach' : 'rose') : i % 4 === 0 ? 'deep' : 'ripple';
-    const m = new THREE.Mesh(stripGeo, mats[kind]);
     const len = (inPath ? 0.8 : 0.45) + hash(i + 70) * 1.5;
-    m.scale.set(len, 1, kind === 'deep' ? 0.11 : 0.055);
-    m.position.set(x, 0.006 + (i % 5) * 0.0008, z);
+    const g = stripGeo.clone();
+    g.scale(len, 1, kind === 'deep' ? 0.11 : 0.055);
+    g.translate(x, 0.006 + (i % 5) * 0.0008, z);
+    const phase = hash(i + 9) * Math.PI * 2, amp = 0.1 + hash(i + 11) * 0.2;
+    g.setAttribute('aDrift', new THREE.BufferAttribute(new Float32Array([phase, amp, phase, amp, phase, amp, phase, amp]), 2));
+    rippleParts[kind].push(g);
+  }
+  for (const [kind, parts] of Object.entries(rippleParts)) {
+    const material = mats[kind];
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uDrift = drift;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute vec2 aDrift;\nuniform float uDrift;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.x += sin(uDrift + aDrift.x) * aDrift.y;');
+    };
+    material.customProgramCacheKey = () => 'ripple-drift';
+    const m = new THREE.Mesh(mergeGeometries(parts), material);
     m.renderOrder = 1;
     env.add(m);
-    ripples.push({ m, x, phase: hash(i + 9) * Math.PI * 2, amp: 0.1 + hash(i + 11) * 0.2 });
   }
 
   // Warm window light on the water beside the sauna.
@@ -212,7 +227,7 @@ export function buildEnvironment(scene, kit, look) {
           g.m.material.opacity = sunPath * (0.72 + Math.sin(t * w * (7 + g.tone * 2) + g.tone) * 0.24);
         }
       }
-      for (const r of ripples) r.m.position.x = r.x + Math.sin(t * (Math.PI / 12) + r.phase) * r.amp;
+      drift.value = t * (Math.PI / 12);
       poolMat.opacity = Math.min(0.85, (0.37 + Math.sin(t * (Math.PI / 12) * 6) * 0.025) * poolGain);
     },
   };

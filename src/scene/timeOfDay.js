@@ -106,10 +106,12 @@ export function createTimeOfDay({ hemi, sun, fill, kit, env, sauna, site, cast, 
       showSky(next);
       apply();
     },
+    // Returns true while a fade is still changing the lighting.
     tick(dt) {
-      if (progress >= 1) return;
+      if (progress >= 1) return false;
       progress = Math.min(1, progress + dt / 0.9);
       apply();
+      return true;
     },
   };
 }

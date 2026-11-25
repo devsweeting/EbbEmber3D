@@ -1,8 +1,10 @@
 // Shared colours and a small batching kit: parts are authored one by one,
-// then merged per material so the scene stays cheap to draw and outline.
+// then merged so the scene stays cheap to draw and outline. Each part's colour
+// is baked into a vertex colour, so one mesh carries many colours; colours that
+// change at runtime (time of day) keep a material of their own.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const C = {
   black: '#30353a', char: '#272b2f', cedarPale: '#e8c88f', batten: '#3d4349', frame: '#1f2327',
@@ -26,6 +28,9 @@ export const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 export const smooth = (u) => { const k = clamp(u); return k * k * (3 - 2 * k); };
 export const lerp = (a, b, k) => a + (b - a) * k;
 
+// Recoloured by timeOfDay.js, so these never share a vertex-coloured mesh.
+const LIVE = new Set([C.led, C.glow, C.ember, C.water]);
+
 export function createKit(look) {
   const cache = new Map();
   const mat = (color, stroke = 0.0024) => {
@@ -33,12 +38,19 @@ export function createKit(look) {
     if (!cache.has(key)) cache.set(key, look.toon(color, { outline: stroke > 0, stroke: stroke || 0.001 }));
     return cache.get(key);
   };
+  const mixed = (stroke) => {
+    const key = `*|${stroke}`;
+    if (!cache.has(key)) cache.set(key, look.toon('#ffffff', { vertexColors: true, outline: stroke > 0, stroke: stroke || 0.001 }));
+    return cache.get(key);
+  };
+  const tint = new THREE.Color();
 
   // With ?qa in the URL, remember each solid part so the clipping audit can test it.
   const qaOn = typeof location !== 'undefined' && new URLSearchParams(location.search).has('qa');
   const qaParts = [];
 
-  function batch(parent, { actor = false } = {}) {
+  // byColor keeps one mesh per colour, for batches whose materials are swapped later.
+  function batch(parent, { actor = false, byColor = false } = {}) {
     const buckets = new Map();
     const d = new THREE.Object3D();
 
@@ -53,13 +65,21 @@ export function createKit(look) {
         if (!source.boundingBox) source.computeBoundingBox();
         qaParts.push({ parent, matrix: d.matrix.clone(), min: source.boundingBox.min.clone(), max: source.boundingBox.max.clone(), kind: source.type, color });
       }
-      const g = source.index ? source.toNonIndexed() : source.clone();
-      g.applyMatrix4(d.matrix);
+      let g = source.clone();
       for (const name of Object.keys(g.attributes)) {
         if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
       }
-      const key = `${color}|${stroke}|${cast}`;
-      if (!buckets.has(key)) buckets.set(key, { color, stroke, cast, parts: [] });
+      if (!g.index) g = mergeVertices(g); // keep shared vertices; flat normals stay split
+      g.applyMatrix4(d.matrix);
+      const own = byColor || LIVE.has(color);
+      if (!own) {
+        tint.set(color);
+        const n = g.attributes.position.count, rgb = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { rgb[i * 3] = tint.r; rgb[i * 3 + 1] = tint.g; rgb[i * 3 + 2] = tint.b; }
+        g.setAttribute('color', new THREE.BufferAttribute(rgb, 3));
+      }
+      const key = own ? `${color}|${stroke}|${cast}` : `*|${stroke}|${cast}`;
+      if (!buckets.has(key)) buckets.set(key, { color: own ? color : null, stroke, cast, parts: [] });
       buckets.get(key).parts.push(g);
     }
 
@@ -74,7 +94,7 @@ export function createKit(look) {
 
     function commit() {
       for (const b of buckets.values()) {
-        const mesh = new THREE.Mesh(mergeGeometries(b.parts, false), mat(b.color, b.stroke));
+        const mesh = new THREE.Mesh(mergeGeometries(b.parts, false), b.color ? mat(b.color, b.stroke) : mixed(b.stroke));
         mesh.castShadow = b.cast;
         mesh.receiveShadow = true;
         parent.add(mesh);
